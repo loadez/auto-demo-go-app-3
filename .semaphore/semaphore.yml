@@ -1,0 +1,82 @@
+version: v1.0
+name: CI
+agent:
+  machine:
+    type: f1-standard-2
+    os_image: ubuntu2204
+
+blocks:
+  - name: Install
+    task:
+      prologue:
+        commands:
+          - checkout
+          - sem-version go 1.22
+          - cache restore go-deps-$(checksum go.sum)
+      jobs:
+        - name: Install dependencies
+          commands:
+            - echo "Setting up Go modules"
+            - go env -w GO111MODULE=on
+            - go mod download
+            - cache store go-deps-$(checksum go.sum) ${HOME}/go/pkg/mod
+
+  - name: Lint
+    task:
+      prologue:
+        commands:
+          - checkout
+          - sem-version go 1.22
+      jobs:
+        - name: go fmt
+          commands:
+            - go fmt ./...
+        - name: go vet
+          commands:
+            - go vet ./...
+        - name: golangci-lint
+          commands:
+            - echo "Installing golangci-lint"
+            - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.0 || true
+            - golangci-lint run ./... || true
+
+  - name: Test
+    task:
+      prologue:
+        commands:
+          - checkout
+          - sem-version go 1.22
+          - cache restore go-deps-$(checksum go.sum)
+      jobs:
+        - name: unit tests
+          commands:
+            - go test ./... -v -coverprofile=coverage.out
+            - mkdir -p coverage
+            - mv coverage.out coverage/
+      epilogue:
+        always:
+          commands:
+            - artifact push coverage/
+
+  - name: Build
+    task:
+      prologue:
+        commands:
+          - checkout
+          - sem-version go 1.22
+      jobs:
+        - name: build binary
+          commands:
+            - mkdir -p bin
+            - go build -o bin/app ./...
+
+  - name: Release (Docker)
+    task:
+      prologue:
+        commands:
+          - checkout
+          - sem-version go 1.22
+      jobs:
+        - name: build docker image
+          commands:
+            - if [ -f Dockerfile ]; then docker build -t app:latest .; else echo "No Dockerfile, skipping"; fi
