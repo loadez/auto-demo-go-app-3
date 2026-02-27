@@ -2,22 +2,25 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
-	"github.com/marcosfilipe/auto-demo-go-app/internal/calculator"
+	"github.com/example/auto-demo-go-app/todo"
 )
 
 func main() {
-	http.HandleFunc("/add", func(w http.ResponseWriter, r *http.Request) {
-		result := calculator.Add(2, 3)
-		fmt.Fprintf(w, "2 + 3 = %d", result)
-	})
+	store := todo.NewStore()
+	handler := todo.NewHandler(store, "templates")
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", handler.List)
+	mux.HandleFunc("POST /add", handler.Add)
+	mux.HandleFunc("POST /toggle/{id}", handler.Toggle)
+	mux.HandleFunc("POST /delete/{id}", handler.Delete)
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "ok")
 	})
 
-	fmt.Println("Server starting on :8080")
-	http.ListenAndServe(":8080", nil)
+	log.Println("Server starting on :8080")
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }

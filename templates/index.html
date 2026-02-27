@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; color: #333; }
+        h1 { margin-bottom: 20px; }
+        .stats { color: #888; font-size: 14px; margin-bottom: 20px; }
+        form.add { display: flex; gap: 8px; margin-bottom: 24px; }
+        form.add input[type="text"] { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+        form.add button { padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .item .title { flex: 1; }
+        .item .title.done { text-decoration: line-through; color: #aaa; }
+        .item form { display: inline; }
+        .item button { background: none; border: none; cursor: pointer; padding: 4px 8px; color: #888; }
+        .item button:hover { color: #333; }
+        .empty { color: #aaa; padding: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <p class="stats">{{.Total}} items, {{.Pending}} pending</p>
+
+    <form class="add" method="POST" action="/add">
+        <input type="text" name="title" placeholder="What needs to be done?" autofocus>
+        <button type="submit">Add</button>
+    </form>
+
+    {{if .Items}}
+        {{range .Items}}
+        <div class="item">
+            <form method="POST" action="/toggle/{{.ID}}">
+                <button type="submit">{{if .Done}}&#9745;{{else}}&#9744;{{end}}</button>
+            </form>
+            <span class="title {{if .Done}}done{{end}}">{{.Title}}</span>
+            <form method="POST" action="/delete/{{.ID}}">
+                <button type="submit">&times;</button>
+            </form>
+        </div>
+        {{end}}
+    {{else}}
+        <p class="empty">No todos yet. Add one above!</p>
+    {{end}}
+</body>
+</html>

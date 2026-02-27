@@ -1,5 +1,5 @@
 build:
-	go build -o bin/app ./...
+	go build -o bin/app .
 
 test:
 	go test -race -v ./...
