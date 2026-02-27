@@ -17,7 +17,7 @@ blocks:
         - name: Install dependencies
           commands:
             - echo "Setting up Go modules"
-            - go env -w GO111MODULE=on
+            - go env -w GOPATH=/home
             - go mod download
             - cache store go-deps-$(checksum go.sum) ${HOME}/go/pkg/mod
 
@@ -37,7 +37,7 @@ blocks:
         - name: golangci-lint
           commands:
             - echo "Installing golangci-lint"
-            - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.0 || true
+            - curl -sSfl https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.56.0 || true
             - golangci-lint run ./... || true
 
   - name: Test
@@ -53,10 +53,6 @@ blocks:
             - go test ./... -v -coverprofile=coverage.out
             - mkdir -p coverage
             - mv coverage.out coverage/
-      epilogue:
-        always:
-          commands:
-            - artifact push coverage/
 
   - name: Build
     task:
@@ -68,7 +64,7 @@ blocks:
         - name: build binary
           commands:
             - mkdir -p bin
-            - go build -o bin/app ./...
+            - GOBIN=./bin go install ./...
 
   - name: Release (Docker)
     task:
