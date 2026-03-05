@@ -1,0 +1,16 @@
+version: v1.0
+name: Test Pipeline
+agent:
+  machine:
+    type: f1-standard-2
+    os_image: ubuntu2204
+blocks:
+  - name: Hello
+    task:
+      secrets:
+        - name: test-missing-secret
+      jobs:
+        - name: World
+          commands:
+            - echo "Hello World"
+            - echo "dev=$dev"
